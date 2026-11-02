@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ledger: sandwich shop books</title>
+<style>
+:root{--bg:#f2f5f7;--surface:#fff;--ink:#14212b;--mute:#5d6b76;--line:#d9e0e5;--in:#0f6b5c;--out:#b4432f;--accent:#1f4e79;--accent-ink:#fff;--in-bg:#e1f1ed;--out-bg:#f8e6e1;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f171d;--surface:#17222a;--ink:#e6edf1;--mute:#93a3ae;--line:#2a3944;--in:#4fc3a8;--out:#f08a76;--accent:#7fb2e0;--accent-ink:#0f171d;--in-bg:#173a34;--out-bg:#40231d;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0f171d;--surface:#17222a;--ink:#e6edf1;--mute:#93a3ae;--line:#2a3944;--in:#4fc3a8;--out:#f08a76;--accent:#7fb2e0;--accent-ink:#0f171d;--in-bg:#173a34;--out-bg:#40231d;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:20px}
+h1{font-size:1.5rem;margin:0;letter-spacing:-.01em}
+h2{font-size:1rem;margin:0 0 12px}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap}
+input,select,button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;min-height:40px}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.sum .panel{padding:14px 16px}
+.sum small{color:var(--mute);display:block}
+.big{font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.in{color:var(--in)}.out{color:var(--out)}
+.grid{display:grid;grid-template-columns:320px 1fr;gap:16px;align-items:start}
+form{display:grid;gap:10px}
+label{display:grid;gap:4px;font-size:.875rem;color:var(--mute)}
+label input,label select{width:100%}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg button[aria-pressed="true"]{border-color:currentColor;font-weight:600}
+.seg .i[aria-pressed="true"]{background:var(--in-bg);color:var(--in)}
+.seg .o[aria-pressed="true"]{background:var(--out-bg);color:var(--out)}
+.stack{display:grid;gap:16px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.9375rem}
+th{text-align:left;font-weight:600;color:var(--mute);font-size:.8125rem;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td button{padding:2px 8px;min-height:32px;color:var(--mute)}
+.bar{display:grid;grid-template-columns:130px 1fr auto;gap:10px;align-items:center;margin:8px 0;font-size:.9rem}
+.track{background:var(--bg);border-radius:4px;height:10px;overflow:hidden}
+.fill{height:100%;background:var(--out);border-radius:4px}
+.fill.g{background:var(--in)}
+.trend{display:flex;gap:10px;align-items:flex-end;height:120px}
+.trend div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;font-size:.75rem;color:var(--mute)}
+.pair{display:flex;gap:3px;align-items:flex-end;width:100%;justify-content:center;height:90px}
+.pair i{display:block;width:40%;max-width:22px;border-radius:3px 3px 0 0;min-height:2px}
+.empty{color:var(--mute);padding:12px 0}
+.row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border:0}
+.row.sub{color:var(--mute);font-size:.9rem}
+.row.tot{font-weight:700}
+.note{color:var(--mute);font-size:.85rem;margin:10px 0 0}
+@media (max-width:760px){.grid{grid-template-columns:1fr}.big{font-size:1.25rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Ledger: sandwich shop</h1>
+  <div class="ctrl">
+    <input type="month" id="month" aria-label="Month">
+    <select id="cur" aria-label="Currency"><option>SGD</option><option>USD</option><option>MYR</option><option>AUD</option><option>GBP</option><option>EUR</option></select>
+  </div>
+</header>
+
+<section class="sum" aria-label="Month summary">
+  <div class="panel"><small>Sales</small><span class="big in" id="sSales">0</span></div>
+  <div class="panel"><small>Net profit</small><span class="big" id="sNet">0</span></div>
+  <div class="panel"><small>Food cost</small><span class="big" id="sFood">0%</span></div>
+</section>
+
+<div class="grid">
+  <div class="stack">
+    <div class="panel">
+      <h2>Add entry</h2>
+      <form id="f">
+        <div class="seg" role="group" aria-label="Type">
+          <button type="button" class="i" id="tIn" aria-pressed="true">Sale</button>
+          <button type="button" class="o" id="tOut" aria-pressed="false">Cost</button>
+        </div>
+        <label>Description<input id="desc" required maxlength="80" placeholder="Lunch sales or Bread delivery"></label>
+        <label>Amount<input id="amt" type="number" step="0.01" min="0.01" required inputmode="decimal"></label>
+        <label>Date<input id="date" type="date" required></label>
+        <label>Category<select id="cat"></select></label>
+        <label>Account<select id="acct"><option>Bank</option><option>Cash drawer</option><option>Card terminal</option></select></label>
+        <button class="primary" type="submit">Add entry</button>
+      </form>
+    </div>
+    <div class="panel"><h2>Account balances</h2><div id="accts"></div></div>
+  </div>
+
+  <div class="stack">
+    <div class="panel"><h2>Profit and loss</h2><div id="pl"></div></div>
+    <div class="panel"><h2>Sales by channel</h2><div id="chan"></div></div>
+    <div class="panel"><h2>Costs by category</h2><div id="cats"></div></div>
+    <div class="panel"><h2>Entries</h2><div class="scroll" id="list"></div></div>
+    <div class="panel"><h2>Sales vs costs, last six months</h2><div class="trend" id="trend"></div></div>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+var KEY='ledger-fb-v1';
+var COGS=['Bread and bakery','Meats and proteins','Produce and sauces','Packaging'];
+var OPEX=['Rent','Staff wages','Utilities','Delivery commissions','Marketing','Equipment','Licences and other'];
+var CATS={in:['Dine-in','Takeaway','GrabFood','foodpanda','Catering','Other income'],out:COGS.concat(OPEX)};
+var S={tx:[],cur:'SGD'};
+try{var raw=localStorage.getItem(KEY);if(raw){var p=JSON.parse(raw);if(p&&Array.isArray(p.tx)){S=p;}}}catch(e){}
+var type='in';
+var $=function(id){return document.getElementById(id)};
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function money(v){try{return new Intl.NumberFormat(undefined,{style:'currency',currency:S.cur}).format(v)}catch(e){return v.toFixed(2)}}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function fillCats(){$('cat').innerHTML=CATS[type].map(function(c){return'<option>'+c+'</option>'}).join('')}
+function setType(t){type=t;$('tOut').setAttribute('aria-pressed',t==='out');$('tIn').setAttribute('aria-pressed',t==='in');fillCats()}
+function calc(list){var r={sales:0,cogs:0,opex:0};list.forEach(function(t){if(t.type==='in')r.sales+=t.amount;else if(COGS.indexOf(t.cat)>-1)r.cogs+=t.amount;else r.opex+=t.amount});r.gp=r.sales-r.cogs;r.net=r.gp-r.opex;r.costs=r.cogs+r.opex;return r}
+function pct(a,b){return b>0?(a/b*100).toFixed(1)+'%':'n/a'}
+function bars(map,cls){var k=Object.keys(map).sort(function(a,b){return map[b]-map[a]});return k.map(function(n){return'<div class="bar"><span>'+esc(n)+'</span><div class="track"><div class="fill '+cls+'" style="width:'+(map[n]/map[k[0]]*100)+'%"></div></div><span>'+money(map[n])+'</span></div>'}).join('')}
+function render(){
+  var m=$('month').value;
+  var list=S.tx.filter(function(t){return t.date.slice(0,7)===m}).sort(function(a,b){return b.date.localeCompare(a.date)});
+  var r=calc(list);
+  $('sSales').textContent=money(r.sales);
+  $('sNet').textContent=money(r.net);$('sNet').className='big '+(r.net>=0?'in':'out');
+  $('sFood').textContent=pct(r.cogs,r.sales);
+  var gm=r.sales>0?r.gp/r.sales:0;
+  var be=gm>0?money(r.opex/gm):'n/a';
+  $('pl').innerHTML='<div class="row"><span>Sales</span><span>'+money(r.sales)+'</span></div>'+
+   '<div class="row sub"><span>Cost of goods (ingredients, packaging)</span><span>−'+money(r.cogs)+'</span></div>'+
+   '<div class="row tot"><span>Gross profit ('+pct(r.gp,r.sales)+' margin)</span><span>'+money(r.gp)+'</span></div>'+
+   '<div class="row sub"><span>Operating costs (rent, wages, other)</span><span>−'+money(r.opex)+'</span></div>'+
+   '<div class="row tot"><span>Net profit</span><span class="'+(r.net>=0?'in':'out')+'">'+money(r.net)+'</span></div>'+
+   '<p class="note">Break-even sales this month: '+be+' (operating costs ÷ gross margin).</p>';
+  var ch={},co={};
+  list.forEach(function(t){var o=t.type==='in'?ch:co;o[t.cat]=(o[t.cat]||0)+t.amount});
+  $('chan').innerHTML=Object.keys(ch).length?bars(ch,'g'):'<div class="empty">No sales recorded this month.</div>';
+  $('cats').innerHTML=Object.keys(co).length?bars(co,''):'<div class="empty">No costs recorded this month.</div>';
+  $('list').innerHTML=list.length?'<table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Account</th><th class="n">Amount</th><th></th></tr></thead><tbody>'+list.map(function(t){
+    return'<tr><td>'+t.date+'</td><td>'+esc(t.desc)+'</td><td>'+esc(t.cat)+'</td><td>'+esc(t.acct)+'</td><td class="n '+(t.type==='in'?'in':'out')+'">'+(t.type==='in'?'+':'−')+money(t.amount)+'</td><td><button data-del="'+t.id+'" aria-label="Delete '+esc(t.desc)+'">Delete</button></td></tr>'}).join('')+'</tbody></table>':'<div class="empty">No entries this month. Add today’s sales or a supplier bill on the left.</div>';
+  var ac={};S.tx.forEach(function(t){ac[t.acct]=(ac[t.acct]||0)+(t.type==='in'?t.amount:-t.amount)});
+  $('accts').innerHTML=['Bank','Cash drawer','Card terminal'].map(function(a){var v=ac[a]||0;return'<div class="row"><span>'+a+'</span><strong class="'+(v>=0?'in':'out')+'">'+money(v)+'</strong></div>'}).join('');
+  var parts=m.split('-'),y=+parts[0],mo=+parts[1]-1,cols=[],mx=1;
+  for(var k=5;k>=0;k--){var d=new Date(y,mo-k,1);var key=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+    var q=calc(S.tx.filter(function(t){return t.date.slice(0,7)===key}));cols.push({l:d.toLocaleString(undefined,{month:'short'}),i:q.sales,o:q.costs});mx=Math.max(mx,q.sales,q.costs)}
+  $('trend').innerHTML=cols.map(function(c){return'<div><span class="pair"><i style="background:var(--in);height:'+(c.i/mx*100)+'%" title="Sales '+money(c.i)+'"></i><i style="background:var(--out);height:'+(c.o/mx*100)+'%" title="Costs '+money(c.o)+'"></i></span>'+c.l+'</div>'}).join('');
+}
+$('tOut').onclick=function(){setType('out')};
+$('tIn').onclick=function(){setType('in')};
+$('month').onchange=render;
+$('cur').onchange=function(){S.cur=$('cur').value;save();render()};
+$('f').onsubmit=function(e){
+  e.preventDefault();
+  var a=parseFloat($('amt').value);if(!(a>0))return;
+  S.tx.push({id:Date.now()+''+Math.floor(Math.random()*1000),type:type,desc:$('desc').value.trim(),amount:Math.round(a*100)/100,date:$('date').value,cat:$('cat').value,acct:$('acct').value});
+  save();$('desc').value='';$('amt').value='';$('month').value=$('date').value.slice(0,7);render();$('desc').focus();
+};
+$('list').onclick=function(e){var id=e.target.getAttribute&&e.target.getAttribute('data-del');if(!id)return;S.tx=S.tx.filter(function(t){return t.id!==id});save();render()};
+$('cur').value=S.cur;$('date').value=today();$('month').value=today().slice(0,7);fillCats();render();
+})();
+</script>
+</body>
+</html>
